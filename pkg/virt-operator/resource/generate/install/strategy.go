@@ -54,7 +54,7 @@ import (
 
 	// wpklog
 	"k8s.io/klog/v2"
-	"kubevirt.io/client-go/log"
+	// "kubevirt.io/client-go/log"
 
 	"kubevirt.io/kubevirt/pkg/monitoring/rules"
 	"kubevirt.io/kubevirt/pkg/virt-operator/resource/generate/components"
@@ -547,19 +547,8 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 			strategy.prometheusRules = append(strategy.prometheusRules, prometheusRule)
 		}
 	} else {
-		// log.Log.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
-
-		// NOTE: i need the klog warning here ...
-		// from examples: klog.InfoS(..) LSP should help
-
 		klog.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
-
-	}
-
-	// NOTE will follow:
-	// https://github.com/kubernetes/enhancements/tree/master/keps/sig-instrumentation/1602-structured-logging
-
-	// wpklog
+	} // wpklog
 
 	for _, entry := range rbaclist {
 		cr, ok := entry.(*rbacv1.ClusterRole)
@@ -593,20 +582,22 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 
 	invalidLabelPatternErrorMessage := "invalid %s: labels must be 63 characters or less, begin and end with alphanumeric characters, and contain only dot, hyphen or dash"
 
+	// wpklog
+
 	if operatorutil.IsValidLabel(config.GetProductName()) {
 		productName = config.GetProductName()
 	} else {
-		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productName")
+		klog.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productName")
 	}
 	if operatorutil.IsValidLabel(config.GetProductVersion()) {
 		productVersion = config.GetProductVersion()
 	} else {
-		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productVersion")
+		klog.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productVersion")
 	}
 	if operatorutil.IsValidLabel(config.GetProductComponent()) {
 		productComponent = config.GetProductComponent()
 	} else {
-		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productComponent")
+		klog.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productComponent")
 	}
 
 	strategy.validatingWebhookConfigurations = append(strategy.validatingWebhookConfigurations, components.NewOpertorValidatingWebhookConfiguration(operatorNamespace))
@@ -959,10 +950,10 @@ func loadInstallStrategyFromBytes(data string) (*Strategy, error) {
 			return nil, fmt.Errorf("UNKNOWN TYPE %s detected", obj.Kind)
 
 		}
-		log.Log.Infof("%s loaded", obj.Kind)
+		klog.Infof("%s loaded", obj.Kind)
 	}
 	return strategy, nil
-}
+} // wpklog
 
 func isNamespaceExist(clientset k8coresv1.CoreV1Interface, ns string) (bool, error) {
 	_, err := clientset.Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
