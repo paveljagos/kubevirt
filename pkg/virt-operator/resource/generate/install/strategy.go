@@ -51,6 +51,9 @@ import (
 
 	v1 "kubevirt.io/api/core/v1"
 	instancetypev1beta1 "kubevirt.io/api/instancetype/v1beta1"
+
+	// wpklog
+	"k8s.io/klog/v2"
 	"kubevirt.io/client-go/log"
 
 	"kubevirt.io/kubevirt/pkg/monitoring/rules"
@@ -544,8 +547,19 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 			strategy.prometheusRules = append(strategy.prometheusRules, prometheusRule)
 		}
 	} else {
-		log.Log.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
+		// log.Log.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
+
+		// NOTE: i need the klog warning here ...
+		// from examples: klog.InfoS(..) LSP should help
+
+		klog.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
+
 	}
+
+	// NOTE will follow:
+	// https://github.com/kubernetes/enhancements/tree/master/keps/sig-instrumentation/1602-structured-logging
+
+	// wpklog
 
 	for _, entry := range rbaclist {
 		cr, ok := entry.(*rbacv1.ClusterRole)
