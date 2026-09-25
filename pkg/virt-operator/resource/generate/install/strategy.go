@@ -52,9 +52,15 @@ import (
 	v1 "kubevirt.io/api/core/v1"
 	instancetypev1beta1 "kubevirt.io/api/instancetype/v1beta1"
 
+	// FIX: will remove my changes
+	// ..to get back to as it was
+	//
+	// WARN & NOTE: figure how to ADD STRUCTURE to existing logging.. read again:
+	// https://github.com/kubernetes/enhancements/blob/master/keps/sig-instrumentation/1602-structured-logging/README.md#goals
+	//
 	// wpklog
 	"k8s.io/klog/v2"
-	// "kubevirt.io/client-go/log"
+	"kubevirt.io/client-go/log"
 
 	"kubevirt.io/kubevirt/pkg/monitoring/rules"
 	"kubevirt.io/kubevirt/pkg/virt-operator/resource/generate/components"
@@ -547,8 +553,23 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 			strategy.prometheusRules = append(strategy.prometheusRules, prometheusRule)
 		}
 	} else {
-		klog.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
+
+		fmt.Println("ORIGINAL LOGGING by client-go/log :")
+
+		log.Log.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
+
+		fmt.Println("key value pairs by klog/v2 :")
+
+		klog.InfoS("Failed to create ServiceMonitor resources because ServiceAccount was not found in monitoring namespaces",
+			"serviceAccount", monitorServiceAccount,
+			"namespaces", config.GetPotentialMonitorNamespaces())
+
 	} // wpklog
+	// TEST ME:
+	// go test -v ./pkg/virt-operator/resource/generate/install/...
+	// key value pairs by klog/v2 :
+	// I0925 10:27:17.072961   62364 strategy.go:563] "Failed to create ServiceMonitor resources because ServiceAccount was not found in monitoring namespaces" serviceAccount="prometheus-k8s" namespaces=["openshift-monitoring","monitoring"]
+	// SUCCESS! -- 23 Passed | 0 Failed | 0 Pending | 0 Skipped
 
 	for _, entry := range rbaclist {
 		cr, ok := entry.(*rbacv1.ClusterRole)
@@ -587,17 +608,17 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 	if operatorutil.IsValidLabel(config.GetProductName()) {
 		productName = config.GetProductName()
 	} else {
-		klog.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productName")
+		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productName")
 	}
 	if operatorutil.IsValidLabel(config.GetProductVersion()) {
 		productVersion = config.GetProductVersion()
 	} else {
-		klog.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productVersion")
+		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productVersion")
 	}
 	if operatorutil.IsValidLabel(config.GetProductComponent()) {
 		productComponent = config.GetProductComponent()
 	} else {
-		klog.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productComponent")
+		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productComponent")
 	}
 
 	strategy.validatingWebhookConfigurations = append(strategy.validatingWebhookConfigurations, components.NewOpertorValidatingWebhookConfiguration(operatorNamespace))
@@ -950,7 +971,7 @@ func loadInstallStrategyFromBytes(data string) (*Strategy, error) {
 			return nil, fmt.Errorf("UNKNOWN TYPE %s detected", obj.Kind)
 
 		}
-		klog.Infof("%s loaded", obj.Kind)
+		log.Log.Infof("%s loaded", obj.Kind)
 	}
 	return strategy, nil
 } // wpklog
