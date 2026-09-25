@@ -56,6 +56,7 @@ import (
 	// ..to get back to as it was
 	//
 	// WARN & NOTE: figure how to ADD STRUCTURE to existing logging.. read again:
+	// and follow the Kubernetes Enhancement Proposal 1602
 	// https://github.com/kubernetes/enhancements/blob/master/keps/sig-instrumentation/1602-structured-logging/README.md#goals
 	//
 	// wpklog
@@ -556,6 +557,7 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 
 		fmt.Println("ORIGINAL LOGGING by client-go/log :")
 
+		// NOTE READ CAREFULLY: namespaces  &  serviceAccount
 		log.Log.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
 
 		fmt.Println("key value pairs by klog/v2 :")
@@ -563,7 +565,6 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 		klog.InfoS("Failed to create ServiceMonitor resources because ServiceAccount was not found in monitoring namespaces",
 			"serviceAccount", monitorServiceAccount,
 			"namespaces", config.GetPotentialMonitorNamespaces())
-
 	} // wpklog
 	// TEST ME:
 	// go test -v ./pkg/virt-operator/resource/generate/install/...
@@ -601,24 +602,43 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 	var productVersion string
 	var productComponent string
 
-	invalidLabelPatternErrorMessage := "invalid %s: labels must be 63 characters or less, begin and end with alphanumeric characters, and contain only dot, hyphen or dash"
+	// invalidLabelPatternErrorMessage := "invalid %s: labels must be 63 characters or less, begin and end with alphanumeric characters, and contain only dot, hyphen or dash"
 
 	// wpklog
+	// WARNING this is WP testing of new logs
+	fmt.Println("OUTSIDE OF IF --> klog/v2: key value pair..")
+	// klog.ErrorS(nil, "Invalid label:",
+	// 	"field", "kubevirt.spec.productComponent",
+	// 	"value", config.GetProductComponent(),
+	// 	"reason", "Labels must be 63 characters or less, begin and end with alphanumeric characters, and contain only dot, hyphen or dash",
+	// )
 
 	if operatorutil.IsValidLabel(config.GetProductName()) {
 		productName = config.GetProductName()
 	} else {
-		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productName")
+		klog.ErrorS(nil, "Invalid label:",
+			"field", "kubevirt.spec.productName",
+			"value", config.GetProductName(),
+			"reason", "Labels must be 63 characters or less, begin and end with alphanumeric characters, and contain only dot, hyphen or dash",
+		)
 	}
 	if operatorutil.IsValidLabel(config.GetProductVersion()) {
 		productVersion = config.GetProductVersion()
 	} else {
-		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productVersion")
+		klog.ErrorS(nil, "Invalid label:",
+			"field", "kubevirt.spec.productVersion",
+			"value", config.GetProductVersion(),
+			"reason", "Invalid product version",
+		)
 	}
 	if operatorutil.IsValidLabel(config.GetProductComponent()) {
 		productComponent = config.GetProductComponent()
 	} else {
-		log.Log.Errorf(invalidLabelPatternErrorMessage, "kubevirt.spec.productComponent")
+		klog.ErrorS(nil, "Invalid label:",
+			"field", "kubevirt.spec.productComponent",
+			"value", config.GetProductComponent(),
+			"reason", "Labels must be 63 characters or less, begin and end with alphanumeric characters, and contain only dot, hyphen or dash",
+		)
 	}
 
 	strategy.validatingWebhookConfigurations = append(strategy.validatingWebhookConfigurations, components.NewOpertorValidatingWebhookConfiguration(operatorNamespace))
@@ -971,7 +991,10 @@ func loadInstallStrategyFromBytes(data string) (*Strategy, error) {
 			return nil, fmt.Errorf("UNKNOWN TYPE %s detected", obj.Kind)
 
 		}
-		log.Log.Infof("%s loaded", obj.Kind)
+		klog.InfoS("Resource loaded",
+			"kind", obj.Kind,
+		)
+
 	}
 	return strategy, nil
 } // wpklog
