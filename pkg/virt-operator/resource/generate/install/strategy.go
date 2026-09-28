@@ -52,13 +52,6 @@ import (
 	v1 "kubevirt.io/api/core/v1"
 	instancetypev1beta1 "kubevirt.io/api/instancetype/v1beta1"
 
-	// FIX: will remove my changes
-	// ..to get back to as it was
-	//
-	// WARN & NOTE: figure how to ADD STRUCTURE to existing logging.. read again:
-	// and follow the Kubernetes Enhancement Proposal 1602
-	// https://github.com/kubernetes/enhancements/blob/master/keps/sig-instrumentation/1602-structured-logging/README.md#goals
-	//
 	// wpklog
 	"k8s.io/klog/v2"
 	"kubevirt.io/client-go/log"
@@ -557,7 +550,6 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 
 		fmt.Println("ORIGINAL LOGGING by client-go/log :")
 
-		// NOTE READ CAREFULLY: namespaces  &  serviceAccount
 		log.Log.Warningf("failed to create ServiceMonitor resources because couldn't find ServiceAccount %v in any monitoring namespaces : %v", monitorServiceAccount, strings.Join(config.GetPotentialMonitorNamespaces(), ", "))
 
 		fmt.Println("key value pairs by klog/v2 :")
@@ -601,8 +593,6 @@ func GenerateCurrentInstallStrategy(config *operatorutil.KubeVirtDeploymentConfi
 	var productName string
 	var productVersion string
 	var productComponent string
-
-	// invalidLabelPatternErrorMessage := "invalid %s: labels must be 63 characters or less, begin and end with alphanumeric characters, and contain only dot, hyphen or dash"
 
 	// wpklog
 	// WARNING this is WP testing of new logs
